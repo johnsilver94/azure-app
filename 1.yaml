@@ -1,0 +1,51 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+
+docker tag azure-back silverfang94/azure-back:v1
+docker tag azure-front silverfang94/azure-front:v1
+docker tag azure-back-resource silverfang94/azure-back-resource:v1
+
+docker push silverfang94/azure-back:v1
+docker push silverfang94/azure-front:v1
+docker push silverfang94/azure-back-resource:v1
+
+
+az group create --name azureAppResourceGroup --location westeurope
+az acr create --resource-group azureAppResourceGroup --name acrAzureApp --sku Basic
+az acr login --name acrAzureApp
+az acr list --resource-group azureAppResourceGroup --query "[].{acrLoginServer:loginServer}" --output table
+
+docker tag azure-back acrazureapp.azurecr.io/azure-back:v1
+docker tag azure-front acrazureapp.azurecr.io/azure-front:v1
+docker tag azure-back-resource acrazureapp.azurecr.io/azure-back-resource:v1
+
+docker push acrazureapp.azurecr.io/azure-back:v1
+docker push acrazureapp.azurecr.io/azure-front:v1
+docker push acrazureapp.azurecr.io/azure-back-resource:v1
+
+az acr repository list --name acrAzureApp --output table
+
+az aks create --resource-group azureAppResourceGroup --name azureAppAKSCluster --node-count 1 --generate-ssh-keys --attach-acr acrAzureApp
+az aks get-credentials --resource-group azureAppResourceGroup --name azureAppAKSCluster
+
+
+########### With update ###############
+echo $(az acr show --name acrAzureApp --resource-group azureAppResourceGroup --query "id" --output tsv)
+
+/subscriptions/654b6e0b-011a-422f-96aa-7996fe61199d/resourceGroups/azureAppResourceGroup/providers/Microsoft.ContainerRegistry/registries/acrAzureApp
+az aks update --name azureAppAKSCluster --resource-group azureAppResourceGroup --attach-acr /subscriptions/654b6e0b-011a-422f-96aa-7996fe61199d/resourceGroups/azureAppResourceGroup/providers/Microsoft.ContainerRegistry/registries/acrAzureApp
+
+
+az aks update -n azureAppAKSCluster -g azureAppResourceGroup --attach-acr acrAzureApp
+
+az aks get-credentials --resource-group azureAppResourceGroup --name azureAppAKSCluster

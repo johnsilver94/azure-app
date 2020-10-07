@@ -1,0 +1,35 @@
+version: '3.4'
+
+services:
+  backend:
+    image: azure-back
+    build:
+      context: .
+      dockerfile: azure-back/azure-back/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+  backend-resource:
+    image: azure-back-resource
+    build:
+      context: .
+      dockerfile: azure-back/azure-back-resource/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+  frontend:
+    image: azure-front
+    build:
+      context: .
+      dockerfile: azure-front/Dockerfile
+    ports:
+      - "4200:4200"
+    environment:
+      - AUTH_API=http://localhost:5000
+    links:
+      - backend
+      - backend-resource

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-back-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-back-app
+  template:
+    metadata:
+      labels:
+        app: azure-back-app
+    spec:
+      containers:
+        - name: azure-back-app
+          image: silverfang94/azure-back:v1
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+          - containerPort: 5000
+            protocol: TCP
